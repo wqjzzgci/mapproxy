@@ -60,6 +60,8 @@ http_opts = {
     'method': str(),
     'client_timeout': number(),
     'ssl_no_cert_checks': bool(),
+    'ssl_key_file': str(),
+    'ssl_cert_file': str(),
     'ssl_ca_certs': str(),
     'headers': {
         anything(): str()
