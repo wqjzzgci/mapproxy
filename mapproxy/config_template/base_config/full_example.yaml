@@ -406,10 +406,19 @@ sources:
   secure_source:
     type: wms
     http:
-      # You can either disable the certificate verification fro HTTPS
+      # You can either disable the certificate verification for HTTPS
       ssl_no_cert_checks: true
       # or point MapProxy to the SSL certificate chain on your system
       # ssl_ca_certs: /etc/ssl/certs/ca-certificates.crt
+      # and optionally specify a client SSL key/certificate to authenticate with
+      # ssl_cert_file: client_cert.cer or client_cert_key.pem
+      # ssl_key_file: client_key.pem 
+      # From the python docs:
+      # Load a private key and the corresponding certificate. The certfile string 
+      # must be the path to a single file in PEM format containing the certificate 
+      # as well as any number of CA certificates needed to establish the certificate’s 
+      # authenticity. The keyfile string, if present, must point to a file containing 
+      # the private key in. Otherwise the private key will be taken from certfile as well.
     req:
       # username and password are extracted from the URL and do not show
       # up in log files
