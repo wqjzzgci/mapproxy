@@ -540,17 +540,19 @@ class SourceConfiguration(ConfigurationBase):
 
         http_client = None
         url, (username, password) = auth_data_from_url(url)
-        insecure = ssl_ca_certs = None
+        insecure = ssl_ca_certs = client_key_file = client_cert_file = None
         if 'https' in url:
             insecure = self.context.globals.get_value('http.ssl_no_cert_checks', self.conf)
             ssl_ca_certs = self.context.globals.get_path('http.ssl_ca_certs', self.conf)
+            client_key_file = self.context.globals.get_path('http.ssl_key_file', self.conf)
+            client_cert_file = self.context.globals.get_path('http.ssl_cert_file', self.conf)
 
         timeout = self.context.globals.get_value('http.client_timeout', self.conf)
         headers = self.context.globals.get_value('http.headers', self.conf)
 
         http_client = HTTPClient(url, username, password, insecure=insecure,
                                  ssl_ca_certs=ssl_ca_certs, timeout=timeout,
-                                 headers=headers)
+                                 headers=headers, client_key_file=client_key_file, client_cert_file=client_cert_file)
         return http_client, url
 
     @memoize

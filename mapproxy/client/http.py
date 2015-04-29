@@ -71,11 +71,11 @@ class _URLOpenerCache(object):
     def __init__(self):
         self._opener = {}
 
-    def __call__(self, ssl_ca_certs, url, username, password):
+    def __call__(self, ssl_ca_certs, url, username, password, client_key_file, client_cert_file):
         if ssl_ca_certs not in self._opener:
             handlers = []
-            if ssl_ca_certs:
-                connection_class = verified_https_connection_with_ca_certs(ssl_ca_certs)
+            if ssl_ca_certs or client_key_file or client_cert_file:
+                connection_class = verified_https_connection_with_ca_certs(ssl_ca_certs, client_key_file, client_cert_file)
                 https_handler = VerifiedHTTPSHandler(connection_class=connection_class)
                 handlers.append(https_handler)
             passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -100,7 +100,7 @@ create_url_opener = _URLOpenerCache()
 
 class HTTPClient(object):
     def __init__(self, url=None, username=None, password=None, insecure=False,
-                 ssl_ca_certs=None, timeout=None, headers=None):
+                 ssl_ca_certs=None, timeout=None, headers=None, client_key_file=None, client_cert_file=None):
         if _urllib2_has_timeout:
             self._timeout = timeout
         else:
@@ -109,6 +109,8 @@ class HTTPClient(object):
         if url and url.startswith('https'):
             if insecure:
                 ssl_ca_certs = None
+                client_key_file = None
+                client_cert_file = None
             else:
                 if ssl is None:
                     raise ImportError('No ssl module found. SSL certificate '
@@ -118,7 +120,7 @@ class HTTPClient(object):
                     raise HTTPClientError('No ca_certs file set (http.ssl_ca_certs). '
                         'Set file or disable verification with http.ssl_no_cert_checks option.')
 
-        self.opener = create_url_opener(ssl_ca_certs, url, username, password)
+        self.opener = create_url_opener(ssl_ca_certs, url, username, password, client_key_file, client_cert_file)
         self.header_list = headers.items() if headers else []
 
     def open(self, url, data=None):
@@ -217,6 +219,8 @@ def retrieve_image(url, client=None):
 class VerifiedHTTPSConnection(httplib.HTTPSConnection):
     def __init__(self, *args, **kw):
         self._ca_certs = kw.pop('ca_certs', None)
+        self._key_file = kw.pop('key_file', None)
+        self._cert_file = kw.pop('cert_file', None)
         httplib.HTTPSConnection.__init__(self, *args, **kw)
 
     def connect(self):
@@ -238,17 +242,19 @@ class VerifiedHTTPSConnection(httplib.HTTPSConnection):
         # wrap the socket using verification with the root
         #    certs in self.ca_certs_path
         self.sock = ssl.wrap_socket(sock,
-                                    self.key_file,
-                                    self.cert_file,
+                                    self._key_file,
+                                    self._cert_file,
                                     cert_reqs=ssl.CERT_REQUIRED,
                                     ca_certs=self._ca_certs)
 
-def verified_https_connection_with_ca_certs(ca_certs):
+def verified_https_connection_with_ca_certs(ca_certs, key_file, cert_file):
     """
     Creates VerifiedHTTPSConnection classes with given ca_certs file.
     """
     def wrapper(*args, **kw):
         kw['ca_certs'] = ca_certs
+        kw['key_file'] = key_file
+        kw['cert_file'] = cert_file
         return VerifiedHTTPSConnection(*args, **kw)
     return wrapper
 
