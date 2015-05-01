@@ -19,6 +19,7 @@ Tile retrieval (WMS, TMS, etc.).
 import sys
 import time
 import warnings
+import cookielib
 
 from mapproxy.version import version
 from mapproxy.image import ImageSource
@@ -90,6 +91,9 @@ class _URLOpenerCache(object):
             handlers.append(authhandler)
             authhandler = urllib2.HTTPDigestAuthHandler(passman)
             handlers.append(authhandler)
+            cj = cookielib.CookieJar()
+            cookiehandler = urllib2.HTTPCookieProcessor(cj)
+            handlers.append(cookiehandler)
 
             opener = urllib2.build_opener(*handlers)
             opener.addheaders = [('User-agent', 'MapProxy-%s' % (version,))]
